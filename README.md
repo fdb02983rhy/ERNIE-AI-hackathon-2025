@@ -34,10 +34,41 @@ Dr. Paddle bridges the gap between paper-based medical instructions and digital 
 
 ## API
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/recognize` | Trigger OCR recognition on current image |
-| `GET` | `/api/current` | Get current captured image (JPEG) |
+### `POST /api/recognize`
+
+Trigger OCR recognition on the current image and extract prescription data.
+
+**Response:**
+```json
+{
+  "takings": [
+    {
+      "name": "Amoxicillin 500mg, day 1/3",
+      "start": "2025-11-30T10:00:00",
+      "description": "Take 1 capsule with food"
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Medicine name, dose, and day count |
+| `start` | string | ISO 8601 datetime for first taking |
+| `description` | string | Instructions for taking the medicine |
+
+---
+
+### `GET /api/current`
+
+Get the current captured image.
+
+**Response:** JPEG image file
+
+**Headers:**
+```
+Content-Type: image/jpeg
+```
 
 ## Tech Stack
 
@@ -54,6 +85,8 @@ Dr. Paddle bridges the gap between paper-based medical instructions and digital 
 │   └── logo.png      # Project logo
 ├── backend/          # FastAPI backend server
 │   ├── api/          # API endpoints
+│   ├── services/     # Business logic services
+│   ├── demo/         # Demo images for testing
 │   ├── main.py       # Application entry point
 │   └── README.md     # Backend setup instructions
 └── README.md         # This file
