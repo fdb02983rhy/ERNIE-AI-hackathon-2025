@@ -39,6 +39,21 @@ Dr. Paddle bridges the gap between paper-based medical instructions and digital 
 | `POST` | `/api/recognize` | Trigger OCR recognition on current image |
 | `GET` | `/api/current` | Get current captured image (JPEG) |
 
+### Response format for `/api/recognize`
+
+```json
+{
+  "takings": [
+    {
+      "name": "Amoxicillin 500mg, day 1/3",
+      "start": "2025-11-30T10:00:00",
+      "description": "Take 1 capsule with food"
+    },
+    ...
+  ]
+}
+```
+
 ## Tech Stack
 
 - **Backend**: FastAPI (Python)
@@ -54,6 +69,8 @@ Dr. Paddle bridges the gap between paper-based medical instructions and digital 
 │   └── logo.png      # Project logo
 ├── backend/          # FastAPI backend server
 │   ├── api/          # API endpoints
+│   ├── services/     # Business logic services
+│   ├── demo/         # Demo images for testing
 │   ├── main.py       # Application entry point
 │   └── README.md     # Backend setup instructions
 └── README.md         # This file
