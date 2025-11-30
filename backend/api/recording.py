@@ -1,8 +1,23 @@
-from fastapi import APIRouter
+from pathlib import Path
 
-router = APIRouter(prefix="/recording", tags=["recording"])
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
+
+router = APIRouter(prefix="/api", tags=["api"])
+
+DEMO_DIR = Path(__file__).parent.parent / "demo"
 
 
-@router.post("/take")
-def take_recording():
-    return {"status": "recording taken"}
+@router.post("/recognize")
+def recognize():
+    """Trigger OCR recognition on the current image."""
+    return {"status": "recognition triggered"}
+
+
+@router.get("/current")
+def get_current_image():
+    """Return the current captured image."""
+    image_path = DEMO_DIR / "scr.jpg"
+    if not image_path.exists():
+        raise HTTPException(status_code=404, detail="No image available")
+    return FileResponse(image_path, media_type="image/jpeg")

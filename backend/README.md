@@ -20,7 +20,8 @@ Server runs at http://localhost:8000
 ## API Endpoints
 
 - `GET /test` - Health check
-- `POST /recording/take` - Take a recording
+- `POST /api/recognize` - Trigger OCR recognition
+- `GET /api/current` - Get current captured image (JPEG)
 
 ## Docs
 
