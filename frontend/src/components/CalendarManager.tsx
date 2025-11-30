@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { listEvents, addEvent } from '../app/actions/calendar';
+import { listTasks, addTask } from '../app/actions/calendar';
 import {
 	Card,
 	CardContent,
@@ -12,45 +12,44 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CalendarIcon, PlusIcon, Loader2 } from 'lucide-react';
+import { CheckSquare, PlusIcon, Loader2 } from 'lucide-react';
 
 export default function CalendarManager() {
-	const [events, setEvents] = useState<any[]>([]);
+	const [tasks, setTasks] = useState<any[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [adding, setAdding] = useState(false);
-	const [newEvent, setNewEvent] = useState({
-		summary: '',
-		start: '',
-		end: '',
+	const [newTask, setNewTask] = useState({
+		title: '',
+		due: '',
 	});
 
-	const fetchEvents = async () => {
+	const fetchTasks = async () => {
 		setLoading(true);
 		try {
-			const data = await listEvents();
-			setEvents(data);
+			const data = await listTasks();
+			setTasks(data);
 		} catch (error) {
-			console.error('Failed to fetch events', error);
+			console.error('Failed to fetch tasks', error);
 		} finally {
 			setLoading(false);
 		}
 	};
 
 	useEffect(() => {
-		fetchEvents();
+		fetchTasks();
 	}, []);
 
-	const handleAddEvent = async (e: React.FormEvent) => {
+	const handleAddTask = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!newEvent.summary || !newEvent.start || !newEvent.end) return;
+		if (!newTask.title) return;
 
 		setAdding(true);
 		try {
-			await addEvent(newEvent);
-			setNewEvent({ summary: '', start: '', end: '' });
-			await fetchEvents();
+			await addTask(newTask);
+			setNewTask({ title: '', due: '' });
+			await fetchTasks();
 		} catch (error) {
-			console.error('Failed to add event', error);
+			console.error('Failed to add task', error);
 		} finally {
 			setAdding(false);
 		}
@@ -61,42 +60,39 @@ export default function CalendarManager() {
 			<Card className="h-fit">
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2">
-						<CalendarIcon className="h-5 w-5" />
-						Upcoming Events
+						<CheckSquare className="h-5 w-5" />
+						Upcoming Tasks
 					</CardTitle>
 					<CardDescription>
-						Your next 10 events from Google Calendar.
+						Your next 10 incomplete tasks from Google Tasks.
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					{loading && events.length === 0 ? (
+					{loading && tasks.length === 0 ? (
 						<div className="flex justify-center py-8">
 							<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
 						</div>
 					) : (
 						<ul className="space-y-4">
-							{events.length === 0 ? (
+							{tasks.length === 0 ? (
 								<p className="text-sm text-muted-foreground text-center py-4">
-									No upcoming events found.
+									No upcoming tasks found.
 								</p>
 							) : (
-								events.map((event) => (
+								tasks.map((task) => (
 									<li
-										key={event.id}
+										key={task.id}
 										className="flex flex-col gap-1 rounded-lg border p-3 text-sm transition-colors hover:bg-muted/50"
 									>
-										<p className="font-medium leading-none">{event.summary}</p>
-										<p className="text-xs text-muted-foreground">
-											{event.start.dateTime
-												? new Date(event.start.dateTime).toLocaleString(
-														undefined,
-														{
-															dateStyle: 'medium',
-															timeStyle: 'short',
-														},
-												  )
-												: event.start.date}
-										</p>
+										<p className="font-medium leading-none">{task.title}</p>
+										{task.due && (
+											<p className="text-xs text-muted-foreground">
+												Due:{' '}
+												{new Date(task.due).toLocaleDateString(undefined, {
+													dateStyle: 'medium',
+												})}
+											</p>
+										)}
 									</li>
 								))
 							)}
@@ -109,51 +105,36 @@ export default function CalendarManager() {
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2">
 						<PlusIcon className="h-5 w-5" />
-						Add New Event
+						Add New Task
 					</CardTitle>
 					<CardDescription>
-						Schedule a new event on your primary calendar.
+						Create a new task in your default task list.
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<form onSubmit={handleAddEvent} className="space-y-4">
+					<form onSubmit={handleAddTask} className="space-y-4">
 						<div className="space-y-2">
-							<Label htmlFor="summary">Event Summary</Label>
+							<Label htmlFor="title">Task Title</Label>
 							<Input
-								id="summary"
-								placeholder="e.g. Team Meeting"
-								value={newEvent.summary}
+								id="title"
+								placeholder="e.g. Buy Groceries"
+								value={newTask.title}
 								onChange={(e) =>
-									setNewEvent({ ...newEvent, summary: e.target.value })
+									setNewTask({ ...newTask, title: e.target.value })
 								}
 								required
 							/>
 						</div>
-						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<div className="space-y-2">
-								<Label htmlFor="start">Start Time</Label>
-								<Input
-									id="start"
-									type="datetime-local"
-									value={newEvent.start}
-									onChange={(e) =>
-										setNewEvent({ ...newEvent, start: e.target.value })
-									}
-									required
-								/>
-							</div>
-							<div className="space-y-2">
-								<Label htmlFor="end">End Time</Label>
-								<Input
-									id="end"
-									type="datetime-local"
-									value={newEvent.end}
-									onChange={(e) =>
-										setNewEvent({ ...newEvent, end: e.target.value })
-									}
-									required
-								/>
-							</div>
+						<div className="space-y-2">
+							<Label htmlFor="due">Due Date (Optional)</Label>
+							<Input
+								id="due"
+								type="date"
+								value={newTask.due}
+								onChange={(e) =>
+									setNewTask({ ...newTask, due: e.target.value })
+								}
+							/>
 						</div>
 						<Button type="submit" className="w-full" disabled={adding}>
 							{adding ? (
@@ -162,7 +143,7 @@ export default function CalendarManager() {
 									Adding...
 								</>
 							) : (
-								'Add Event'
+								'Add Task'
 							)}
 						</Button>
 					</form>

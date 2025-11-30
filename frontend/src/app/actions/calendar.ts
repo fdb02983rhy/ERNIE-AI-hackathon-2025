@@ -3,7 +3,7 @@
 import { google } from 'googleapis';
 import { auth } from '@/utils/auth';
 
-export async function listEvents() {
+export async function listTasks() {
 	const session = await auth();
 
 	if (!session || !session.accessToken) {
@@ -13,29 +13,23 @@ export async function listEvents() {
 	const oauth2Client = new google.auth.OAuth2();
 	oauth2Client.setCredentials({ access_token: session.accessToken as string });
 
-	const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+	const tasks = google.tasks({ version: 'v1', auth: oauth2Client });
 
 	try {
-		const response = await calendar.events.list({
-			calendarId: 'primary',
-			timeMin: new Date().toISOString(),
+		const response = await tasks.tasks.list({
+			tasklist: '@default',
+			showCompleted: false,
 			maxResults: 10,
-			singleEvents: true,
-			orderBy: 'startTime',
 		});
 
 		return response.data.items || [];
 	} catch (error) {
-		console.error('Error fetching events:', error);
-		throw new Error('Failed to fetch events');
+		console.error('Error fetching tasks:', error);
+		throw new Error('Failed to fetch tasks');
 	}
 }
 
-export async function addEvent(eventDetails: {
-	summary: string;
-	start: string;
-	end: string;
-}) {
+export async function addTask(taskDetails: { title: string; due?: string }) {
 	const session = await auth();
 
 	if (!session || !session.accessToken) {
@@ -45,27 +39,24 @@ export async function addEvent(eventDetails: {
 	const oauth2Client = new google.auth.OAuth2();
 	oauth2Client.setCredentials({ access_token: session.accessToken as string });
 
-	const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+	const tasks = google.tasks({ version: 'v1', auth: oauth2Client });
 
 	try {
-		const event = {
-			summary: eventDetails.summary,
-			start: {
-				dateTime: new Date(eventDetails.start).toISOString(),
-			},
-			end: {
-				dateTime: new Date(eventDetails.end).toISOString(),
-			},
+		const task = {
+			title: taskDetails.title,
+			due: taskDetails.due
+				? new Date(taskDetails.due).toISOString()
+				: undefined,
 		};
 
-		const response = await calendar.events.insert({
-			calendarId: 'primary',
-			requestBody: event,
+		const response = await tasks.tasks.insert({
+			tasklist: '@default',
+			requestBody: task,
 		});
 
 		return response.data;
 	} catch (error) {
-		console.error('Error adding event:', error);
-		throw new Error('Failed to add event');
+		console.error('Error adding task:', error);
+		throw new Error('Failed to add task');
 	}
 }
