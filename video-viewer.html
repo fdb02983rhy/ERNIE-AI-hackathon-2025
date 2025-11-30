@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Stream Viewer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 { color: #eee; margin-bottom: 20px; }
+        .controls {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        input[type="text"] {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 300px;
+            background: #0f3460;
+            color: #fff;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #e94560;
+            color: white;
+        }
+        button:hover { background: #ff6b6b; }
+        button:disabled { background: #666; cursor: not-allowed; }
+        .video-container {
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        #videoStream {
+            display: block;
+            max-width: 90vw;
+            max-height: 70vh;
+        }
+        .status { color: #888; margin-top: 15px; font-size: 14px; }
+        .status.connected { color: #4ecca3; }
+        .status.error { color: #e94560; }
+        .stats {
+            color: #888;
+            margin-top: 10px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Video Stream Viewer</h1>
+
+    <div class="controls">
+        <input type="text" id="streamUrl" placeholder="http://IP:PORT" value="http://localhost:8000/api/current">
+        <button id="connectBtn" onclick="toggleStream()">Connect</button>
+    </div>
+
+    <div class="video-container">
+        <img id="videoStream" alt="Video Stream">
+    </div>
+
+    <p class="status" id="status">Click Connect to start</p>
+    <p class="stats" id="stats"></p>
+
+    <script>
+        const img = document.getElementById('videoStream');
+        const statusEl = document.getElementById('status');
+        const statsEl = document.getElementById('stats');
+        const urlInput = document.getElementById('streamUrl');
+        const connectBtn = document.getElementById('connectBtn');
+
+        let streaming = false;
+        let frameCount = 0;
+        let startTime = 0;
+
+        function toggleStream() {
+            if (streaming) {
+                stopStream();
+            } else {
+                startStream();
+            }
+        }
+
+        function startStream() {
+            const url = urlInput.value.trim();
+            if (!url) {
+                setStatus('Enter a URL', 'error');
+                return;
+            }
+
+            streaming = true;
+            frameCount = 0;
+            startTime = Date.now();
+            connectBtn.textContent = 'Disconnect';
+            setStatus('Connecting...', '');
+
+            // Add cache-busting and start refreshing
+            refreshFrame(url);
+        }
+
+        function refreshFrame(baseUrl) {
+            if (!streaming) return;
+
+            const url = baseUrl + (baseUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+
+            const newImg = new Image();
+            newImg.onload = () => {
+                img.src = newImg.src;
+                frameCount++;
+
+                const elapsed = (Date.now() - startTime) / 1000;
+                const fps = (frameCount / elapsed).toFixed(1);
+                statsEl.textContent = `Frames: ${frameCount} | FPS: ${fps}`;
+                setStatus('Connected', 'connected');
+
+                // Request next frame immediately
+                if (streaming) {
+                    requestAnimationFrame(() => refreshFrame(baseUrl));
+                }
+            };
+            newImg.onerror = () => {
+                if (streaming) {
+                    setStatus('Connection error - retrying...', 'error');
+                    setTimeout(() => refreshFrame(baseUrl), 1000);
+                }
+            };
+            newImg.src = url;
+        }
+
+        function stopStream() {
+            streaming = false;
+            connectBtn.textContent = 'Connect';
+            setStatus('Disconnected', '');
+            statsEl.textContent = '';
+        }
+
+        function setStatus(msg, type) {
+            statusEl.textContent = msg;
+            statusEl.className = 'status ' + type;
+        }
+
+        urlInput.addEventListener('keypress', e => {
+            if (e.key === 'Enter') toggleStream();
+        });
+    </script>
+</body>
+</html>
