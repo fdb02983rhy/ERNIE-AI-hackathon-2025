@@ -32,6 +32,13 @@ Dr. Paddle bridges the gap between paper-based medical instructions and digital 
 - **Medication Reminders** - Never miss a dose with recurring calendar events
 - **Appointment Tracking** - Keep track of follow-up visits and medical appointments
 
+## API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/recognize` | Trigger OCR recognition on current image |
+| `GET` | `/api/current` | Get current captured image (JPEG) |
+
 ## Tech Stack
 
 - **Backend**: FastAPI (Python)
