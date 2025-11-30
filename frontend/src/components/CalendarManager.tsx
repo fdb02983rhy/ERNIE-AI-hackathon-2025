@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { listTasks, addTask } from '../app/actions/calendar';
+import { listEvents, addTask } from '../app/actions/calendar';
 import {
 	Card,
 	CardContent,
@@ -15,41 +15,41 @@ import { Label } from '@/components/ui/label';
 import { CheckSquare, PlusIcon, Loader2 } from 'lucide-react';
 
 export default function CalendarManager() {
-	const [tasks, setTasks] = useState<any[]>([]);
+	const [pills, setPills] = useState<any[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [adding, setAdding] = useState(false);
-	const [newTask, setNewTask] = useState({
+	const [newPill, setNewPill] = useState({
 		title: '',
 		due: '',
 	});
 
-	const fetchTasks = async () => {
+	const fetchPills = async () => {
 		setLoading(true);
 		try {
-			const data = await listTasks();
-			setTasks(data);
+			const data = await listEvents();
+			setPills(data);
 		} catch (error) {
-			console.error('Failed to fetch tasks', error);
+			console.error('Failed to fetch pills', error);
 		} finally {
 			setLoading(false);
 		}
 	};
 
 	useEffect(() => {
-		fetchTasks();
+		fetchPills();
 	}, []);
 
-	const handleAddTask = async (e: React.FormEvent) => {
+	const handleAddPill = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!newTask.title) return;
+		if (!newPill.title) return;
 
 		setAdding(true);
 		try {
-			await addTask(newTask);
-			setNewTask({ title: '', due: '' });
-			await fetchTasks();
+			await addTask(newPill);
+			setNewPill({ title: '', due: '' });
+			await fetchPills();
 		} catch (error) {
-			console.error('Failed to add task', error);
+			console.error('Failed to add pill', error);
 		} finally {
 			setAdding(false);
 		}
@@ -60,79 +60,35 @@ export default function CalendarManager() {
 			<Card className="h-fit">
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2">
-						<CheckSquare className="h-5 w-5" />
-						Upcoming Tasks
-					</CardTitle>
-					<CardDescription>
-						Your next 10 incomplete tasks from Google Tasks.
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					{loading && tasks.length === 0 ? (
-						<div className="flex justify-center py-8">
-							<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-						</div>
-					) : (
-						<ul className="space-y-4">
-							{tasks.length === 0 ? (
-								<p className="text-sm text-muted-foreground text-center py-4">
-									No upcoming tasks found.
-								</p>
-							) : (
-								tasks.map((task) => (
-									<li
-										key={task.id}
-										className="flex flex-col gap-1 rounded-lg border p-3 text-sm transition-colors hover:bg-muted/50"
-									>
-										<p className="font-medium leading-none">{task.title}</p>
-										{task.due && (
-											<p className="text-xs text-muted-foreground">
-												Due:{' '}
-												{new Date(task.due).toLocaleDateString(undefined, {
-													dateStyle: 'medium',
-												})}
-											</p>
-										)}
-									</li>
-								))
-							)}
-						</ul>
-					)}
-				</CardContent>
-			</Card>
-
-			<Card className="h-fit">
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
 						<PlusIcon className="h-5 w-5" />
-						Add New Task
+						Add Pill Reminder
 					</CardTitle>
 					<CardDescription>
-						Create a new task in your default task list.
+						Set a pill reminder and block time on your calendar.
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<form onSubmit={handleAddTask} className="space-y-4">
+					<form onSubmit={handleAddPill} className="space-y-4">
 						<div className="space-y-2">
-							<Label htmlFor="title">Task Title</Label>
+							<Label htmlFor="title">Pill Name</Label>
 							<Input
 								id="title"
-								placeholder="e.g. Buy Groceries"
-								value={newTask.title}
+								placeholder="e.g. Aspirin"
+								value={newPill.title}
 								onChange={(e) =>
-									setNewTask({ ...newTask, title: e.target.value })
+									setNewPill({ ...newPill, title: e.target.value })
 								}
 								required
 							/>
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="due">Due Date (Optional)</Label>
+							<Label htmlFor="due">Time to Take (Optional)</Label>
 							<Input
 								id="due"
-								type="date"
-								value={newTask.due}
+								type="datetime-local"
+								value={newPill.due}
 								onChange={(e) =>
-									setNewTask({ ...newTask, due: e.target.value })
+									setNewPill({ ...newPill, due: e.target.value })
 								}
 							/>
 						</div>
@@ -143,10 +99,55 @@ export default function CalendarManager() {
 									Adding...
 								</>
 							) : (
-								'Add Task'
+								'Add Reminder'
 							)}
 						</Button>
 					</form>
+				</CardContent>
+			</Card>
+
+			<Card className="h-fit">
+				<CardHeader>
+					<CardTitle className="flex items-center gap-2">
+						<CheckSquare className="h-5 w-5" />
+						Upcoming Reminders
+					</CardTitle>
+					<CardDescription>
+						Your next 10 pill reminders from Google Calendar.
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					{loading && pills.length === 0 ? (
+						<div className="flex justify-center py-8">
+							<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+						</div>
+					) : (
+						<ul className="space-y-4">
+							{pills.length === 0 ? (
+								<p className="text-sm text-muted-foreground text-center py-4">
+									No upcoming reminders found.
+								</p>
+							) : (
+								pills.map((pill) => (
+									<li
+										key={pill.id}
+										className="flex flex-col gap-1 rounded-lg border p-3 text-sm transition-colors hover:bg-muted/50"
+									>
+										<p className="font-medium leading-none">{pill.summary}</p>
+										{pill.start?.dateTime && (
+											<p className="text-xs text-muted-foreground">
+												Time:{' '}
+												{new Date(pill.start.dateTime).toLocaleString(undefined, {
+													dateStyle: 'medium',
+													timeStyle: 'short',
+												})}
+											</p>
+										)}
+									</li>
+								))
+							)}
+						</ul>
+					)}
 				</CardContent>
 			</Card>
 		</div>
